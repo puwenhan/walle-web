@@ -20,6 +20,8 @@ use yii\db\Expression;
  * @property string $commit_id
  * @property integer $created_at
  * @property integer $updated_at
+ * @property string $branch
+ * @property string $file_list
  */
 class Task extends \yii\db\ActiveRecord
 {
@@ -52,6 +54,14 @@ class Task extends \yii\db\ActiveRecord
      */
     const STATUS_FAILED = 4;
     /**
+     * 可回滚
+     */
+    const ROLLBACK_TRUE  = 1;
+    /**
+     * 不可回滚
+     */
+    const ROLLBACK_FALSE = 0;
+    /**
      * @inheritdoc
      */
     public static function tableName()
@@ -80,9 +90,10 @@ class Task extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['user_id', 'project_id', 'status', 'title', 'commit_id'], 'required'],
+            [['user_id', 'project_id', 'status', 'title'], 'required'],
             [['user_id', 'project_id', 'action', 'status'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
+            [['file_list'], 'string'],
             [['title', 'link_id', 'ex_link_id', 'commit_id', 'branch'], 'string', 'max' => 100],
         ];
     }
@@ -98,7 +109,7 @@ class Task extends \yii\db\ActiveRecord
             'project_id' => 'Project ID',
             'action' => 'Action',
             'status' => 'Status',
-            'title' => 'Title',
+            'title' => '上线单标题',
             'link_id' => 'Link ID',
             'ex_link_id' => 'Ex Link ID',
             'commit_id' => 'Commit ID',

@@ -23,7 +23,8 @@ class Task extends Command {
         $tasks = GlobalHelper::str2arr($this->getConfig()->pre_deploy);
         if (empty($tasks)) return true;
 
-        $cmd = [];
+        // 本地可能要做一些依赖环境变量的命令操作
+        $cmd = ['source /etc/profile'];
         $workspace = rtrim(Project::getDeployWorkspace($version), '/');
         $pattern = [
             '#{WORKSPACE}#',
@@ -32,6 +33,8 @@ class Task extends Command {
             $workspace,
         ];
 
+        // 简化用户切换目录，直接切换到当前部署空间：{deploy_from}/{env}/{project}-YYmmdd-HHiiss
+        $cmd[] = "cd {$workspace}";
         foreach ($tasks as $task) {
             $cmd[] = preg_replace($pattern, $replace, $task);
         }
@@ -50,7 +53,8 @@ class Task extends Command {
         $tasks = GlobalHelper::str2arr($this->getConfig()->post_deploy);
         if (empty($tasks)) return true;
 
-        $cmd = [];
+        // 本地可能要做一些依赖环境变量的命令操作
+        $cmd = ['source /etc/profile'];
         $workspace = rtrim(Project::getDeployWorkspace($version), '/');
         $pattern = [
             '#{WORKSPACE}#',
@@ -59,11 +63,24 @@ class Task extends Command {
             $workspace,
         ];
 
+        // 简化用户切换目录，直接切换到当前部署空间：{deploy_from}/{env}/{project}-YYmmdd-HHiiss
+        $cmd[] = "cd {$workspace}";
         foreach ($tasks as $task) {
             $cmd[] = preg_replace($pattern, $replace, $task);
         }
         $command = join(' && ', $cmd);
         return $this->runLocalCommand($command);
+    }
+
+    /**
+     * 设置了版本保留数量，超出了设定值，则删除老版本
+     */
+    public function cleanUpReleasesVersion() {
+        $cmd[] = sprintf('cd %s', Project::getReleaseVersionDir());
+        $cmd[] = 'ls -1|sort -r|awk \'FNR > ' . $this->config->keep_version_num . ' {printf("rm -rf %s\n", \$0);}\' | bash ';
+
+        $command = join(' && ', $cmd);
+        return $this->runRemoteCommand($command);
     }
 
     /**
@@ -77,8 +94,9 @@ class Task extends Command {
         $tasks = GlobalHelper::str2arr($task);
         if (empty($tasks)) return '';
 
-        $cmd = [];
-        $workspace = rtrim(Project::getDeployWorkspace($version), '/');
+        // 可能要做一些依赖环境变量的命令操作
+        $cmd = ['source /etc/profile'];
+        $workspace = Project::getTargetWorkspace();
         $version   = Project::getReleaseVersionDir($version);
         $pattern = [
             '#{WORKSPACE}#',
@@ -88,6 +106,9 @@ class Task extends Command {
             $workspace,
             $version,
         ];
+
+        // 简化用户切换目录，直接切换到当前的版本目录：{release_library}/{project}/{version}
+        $cmd[] = "cd {$version}";
         foreach ($tasks as $task) {
             $cmd[] = preg_replace($pattern, $replace, $task);
         }

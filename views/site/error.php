@@ -1,6 +1,7 @@
 <?php
 
 use yii\helpers\Html;
+use yii\helpers\Url;
 
 /**
  * @var yii\web\View $this
@@ -16,8 +17,7 @@ $this->title = $name;
     <h1 class="grey lighter smaller">
         <span class="blue bigger-125">
             <i class="icon-random"></i>
-Something Went Wrong
-
+            <?= \yii::t('w', 'something went wrong') ?>
         </span>
     </h1>
 
@@ -38,7 +38,7 @@ Something Went Wrong
             Go Back
         </a>
 
-        <a href="/" class="btn btn-primary">
+        <a href="<?= Url::to('@web/') ?>" class="btn btn-primary">
             <i class="icon-dashboard"></i>
             Dashboard
         </a>

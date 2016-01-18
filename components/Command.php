@@ -9,7 +9,7 @@
 namespace app\components;
 
 
-abstract class Command {
+class Command {
 
     protected static $LOGDIR = '';
     /**
@@ -35,14 +35,28 @@ abstract class Command {
     protected $log = null;
 
     /**
+     * 加载配置
+     *
+     * @param $config
+     * @return $this
+     * @throws \Exception
+     */
+    public function __construct($config) {
+        if ($config) {
+            $this->config = $config;
+        } else {
+            throw new \Exception(\yii::t('walle', 'unknown config'));
+        }
+    }
+
+    /**
      * 执行本地宿主机命令
      *
      * @param $command
      * @return bool|int true 成功，false 失败
      */
-    final protected function runLocalCommand($command) {
+    final public function runLocalCommand($command) {
         $command = trim($command);
-        // file_put_contents('/tmp/cmd', $command.PHP_EOL.PHP_EOL, 8);
         $this->log('---------------------------------');
         $this->log('---- Executing: $ ' . $command);
 
@@ -58,7 +72,6 @@ abstract class Command {
         $log = implode(PHP_EOL, $log);
         $this->log = trim($log);
 
-        $this->log($command);
         $this->log($log);
         $this->log('---------------------------------');
 
@@ -71,17 +84,17 @@ abstract class Command {
      * @param $command
      * @return bool
      */
-    final protected function runRemoteCommand($command) {
+    final public function runRemoteCommand($command) {
         $this->log = '';
-        $needs_tty = '';
+        $needTTY = ' -T ';
 
         foreach (GlobalHelper::str2arr($this->getConfig()->hosts) as $remoteHost) {
-            $localCommand = 'ssh ' . $needs_tty . ' -p ' . $this->getHostPort($remoteHost)
+            $localCommand = 'ssh ' . $needTTY . ' -p ' . $this->getHostPort($remoteHost)
                 . ' -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no '
                 . $this->getConfig()->release_user . '@'
                 . $this->getHostName($remoteHost);
-            $remoteCommand = str_replace('"', '\\\"', trim($command));
-            $localCommand .= ' "sh -c \"' . $remoteCommand . '\"" ';
+            $remoteCommand = str_replace('"', '\\"', trim($command));
+            $localCommand .= ' " ' . $remoteCommand . ' " ';
             static::log('Run remote command ' . $remoteCommand);
 
             $log = $this->log;
@@ -104,7 +117,7 @@ abstract class Command {
         if ($config) {
             $this->config = $config;
         } else {
-            throw new \Exception('未知的配置');
+            throw new \Exception(\yii::t('walle', 'unknown config'));
         }
         return $this;
     }
@@ -125,7 +138,7 @@ abstract class Command {
 
         $logFile = realpath($logDir) . '/walle-' . date('Ymd') . '.log';
         if (self::$logFile === null) {
-            self::$logFile = fopen($logFile, 'w');
+            self::$logFile = fopen($logFile, 'a');
         }
 
         $message = date('Y-m-d H:i:s -- ') . $message;

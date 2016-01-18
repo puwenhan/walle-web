@@ -19,9 +19,9 @@ class Git extends Command {
         // 存在git目录，直接pull
         if (file_exists($dotGit)) {
             $cmd[] = sprintf('cd %s ', $gitDir);
-            $cmd[] = sprintf('/usr/bin/env git checkout %s', $branch);
-            $cmd[] = sprintf('/usr/bin/env git fetch --all');
-            $cmd[] = sprintf('/usr/bin/env git reset --hard origin/%s', $branch);
+            $cmd[] = sprintf('/usr/bin/env git checkout -q %s', $branch);
+            $cmd[] = sprintf('/usr/bin/env git fetch -q --all');
+            $cmd[] = sprintf('/usr/bin/env git reset -q --hard origin/%s', $branch);
             $command = join(' && ', $cmd);
             return $this->runLocalCommand($command);
         }
@@ -29,8 +29,8 @@ class Git extends Command {
         else {
             $cmd[] = sprintf('mkdir -p %s ', $gitDir);
             $cmd[] = sprintf('cd %s ', $gitDir);
-            $cmd[] = sprintf('/usr/bin/env git clone %s .', $this->getConfig()->git_url);
-            $cmd[] = sprintf('/usr/bin/env git checkout %s', $branch);
+            $cmd[] = sprintf('/usr/bin/env git clone -q %s .', $this->getConfig()->repo_url);
+            $cmd[] = sprintf('/usr/bin/env git checkout -q %s', $branch);
             $command = join(' && ', $cmd);
             return $this->runLocalCommand($command);
         }
@@ -42,13 +42,12 @@ class Git extends Command {
      * @param string $commit
      * @return bool
      */
-    public function updateToVersion($branch, $commit, $version) {
+    public function updateToVersion($task) {
         // 先更新
-        $destination = Project::getDeployWorkspace($version);
-        $this->updateRepo($branch, $destination);
+        $destination = Project::getDeployWorkspace($task->link_id);
+        $this->updateRepo($task->branch, $destination);
         $cmd[] = sprintf('cd %s ', $destination);
-        $cmd[] = sprintf('/usr/bin/env git reset %s', $commit);
-        $cmd[] = '/usr/bin/env git checkout .';
+        $cmd[] = sprintf('/usr/bin/env git reset -q --hard %s', $task->commit_id);
         $command = join(' && ', $cmd);
 
         return $this->runLocalCommand($command);
@@ -64,12 +63,12 @@ class Git extends Command {
         // 先更新，其实没有必要更新
         ///$this->updateRepo('master', $destination);
         $cmd[] = sprintf('cd %s ', $destination);
-        $cmd[] = '/usr/bin/env git pull';
+        $cmd[] = '/usr/bin/env git pull -a';
         $cmd[] = '/usr/bin/env git branch -a';
         $command = join(' && ', $cmd);
         $result = $this->runLocalCommand($command);
         if (!$result) {
-            throw new \Exception('获取分支列表失败：' . $this->getExeLog());
+            throw new \Exception(\yii::t('walle', 'get branches failed') . $this->getExeLog());
         }
 
         $history = [];
@@ -107,7 +106,7 @@ class Git extends Command {
         $command = join(' && ', $cmd);
         $result = $this->runLocalCommand($command);
         if (!$result) {
-            throw new \Exception('获取提交历史失败：' . $this->getExeLog());
+            throw new \Exception(\yii::t('walle', 'get commit log failed') . $this->getExeLog());
         }
 
         $history = [];
@@ -138,7 +137,7 @@ class Git extends Command {
         $command = join(' && ', $cmd);
         $result = $this->runLocalCommand($command);
         if (!$result) {
-            throw new \Exception('获取tag记录失败：' . $this->getExeLog());
+            throw new \Exception(\yii::t('walle', 'get tags failed') . $this->getExeLog());
         }
 
         $history = [];

@@ -11,6 +11,7 @@ namespace app\components;
 
 use app\models\User;
 use yii;
+use yii\helpers\Url;
 
 class GlobalHelper {
 
@@ -24,7 +25,7 @@ class GlobalHelper {
     public static function sendMail($user, $default = null) {
         $params = Yii::$app->params;
         return Yii::$app->mail->compose()
-            ->setFrom([$params['support.email'] => $params['support.name']])
+            ->setFrom(Yii::$app->mail->messageConfig['from'])
             ->setTo($user->email)
             ->setSubject('Complete registration with ' . Yii::$app->name)
             ->send();
@@ -38,7 +39,13 @@ class GlobalHelper {
      * @return array
      */
     public static function str2arr($string, $delimiter = PHP_EOL) {
-        return array_map('trim', explode($delimiter, $string));
+        $items = explode($delimiter, $string);
+        foreach ($items as $key => &$item) {
+            $item = trim($item);
+            //空行或者 #符号 开头的备注信息,过滤
+            if (empty($item) || $item{0} == '#') unset($items[$key]);
+        }
+        return $items;
     }
 
     /**
@@ -61,7 +68,7 @@ class GlobalHelper {
      * @return string
      */
     public static function formatAvatar($pic) {
-        return rtrim(User::AVATAR_ROOT, '/') . '/' . $pic;
+        return rtrim(Url::to('@web' . User::AVATAR_ROOT), '/') . '/' . $pic;
     }
 
     /**
@@ -74,4 +81,5 @@ class GlobalHelper {
             && \Yii::$app->user->identity->role == \app\models\User::ROLE_ADMIN
             && \Yii::$app->user->identity->status == \app\models\User::STATUS_ACTIVE;
     }
+
 }

@@ -9,9 +9,6 @@ $config = [
     'components' => [
         'db' => [
             'class'     => 'yii\db\Connection',
-            'dsn'       => 'mysql:host=127.0.0.1;dbname=test',
-            'username'  => 'username',
-            'password'  => 'password',
             'charset'   => 'utf8',
         ],
         'session' => [
@@ -27,15 +24,6 @@ $config = [
             'useFileTransport' => false,
             'transport' => [
                 'class'      => 'Swift_SmtpTransport',
-                'host'       => 'smtp.exmail.qq.com',     # smtp 发件地址
-                'username'   => 'service@huamanshu.com',  # smtp 发件用户名
-                'password'   => 'K84erUuxg1bHqrfD',       # smtp 发件人的密码
-                'port'       => 25,                       # smtp 端口
-                'encryption' => 'tls',                    # smtp 协议
-            ],
-            'messageConfig' => [
-                'charset' => 'UTF-8',
-                'from'    => ['admin@humanshu.com' => '花满树出品']
             ],
         ],
         'log'  => [
@@ -67,9 +55,9 @@ $config = [
             ],
         ],
     ],
-    'language'   => 'zh-CN',
     'bootstrap'  => [
         'app\components\EventBootstrap',
+        'log',
     ],
     'params'     => require(__DIR__ . '/params.php'),
 ];
@@ -82,11 +70,6 @@ if (YII_ENV_DEV) {
     ];
     $config['modules']['gii'] = [
         'class'      => 'yii\gii\Module',
-        'generators' => [
-            'mongoDbModel' => [
-                'class' => 'yii\mongodb\gii\model\Generator'
-            ],
-        ],
     ];
 }
 

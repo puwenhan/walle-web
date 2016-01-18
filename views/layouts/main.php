@@ -2,6 +2,7 @@
 use yii\helpers\Html;
 use yii\bootstrap\Nav;
 use yii\bootstrap\NavBar;
+use yii\helpers\Url;
 use yii\widgets\Breadcrumbs;
 use app\models\User;
 use app\assets\AppAsset;
@@ -16,45 +17,45 @@ $userName =  \Yii::$app->user->id ? $user->getName() : '';
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title><?= Html::encode($this->title) ?> - Walle 瓦力平台</title>
-    <link href="/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="/dist/css/font-awesome.min.css" rel="stylesheet" />
+    <title><?= Html::encode($this->title) ?> - <?= yii::t('w', 'walle') ?></title>
+    <link href="<?= Url::to('@web/dist/css/bootstrap.min.css') ?>" rel="stylesheet" />
+    <link href="<?= Url::to('@web/dist/css/font-awesome.min.css') ?>" rel="stylesheet" />
 
     <!--[if IE 7]>
-    <link rel="stylesheet" href="/dist/css/font-awesome-ie7.min.css" />
+    <link rel="stylesheet" href="<?= Url::to('@web/dist/css/font-awesome-ie7.min.css') ?>" />
     <![endif]-->
 
     <!-- ace styles -->
-    <link rel="stylesheet" href="/dist/css/chosen.css" />
-    <link rel="stylesheet" href="/dist/css/ace.min.css" />
-    <link rel="stylesheet" href="/dist/css/ace-rtl.min.css" />
-    <link rel="stylesheet" href="/dist/css/ace-skins.min.css" />
-    <link rel="stylesheet" href="/dist/css/walle.css" />
+    <link rel="stylesheet" href="<?= Url::to('@web/dist/css/chosen.css') ?>" />
+    <link rel="stylesheet" href="<?= Url::to('@web/dist/css/ace.min.css') ?>" />
+    <link rel="stylesheet" href="<?= Url::to('@web/dist/css/ace-rtl.min.css') ?>" />
+    <link rel="stylesheet" href="<?= Url::to('@web/dist/css/ace-skins.min.css') ?>" />
+    <link rel="stylesheet" href="<?= Url::to('@web/dist/css/walle.css') ?>" />
 
     <!--[if lte IE 8]>
-    <link rel="stylesheet" href="/dist/css/ace-ie.min.css" />
+    <link rel="stylesheet" href="<?= Url::to('@web/dist/css/ace-ie.min.css') ?>" />
     <![endif]-->
 
     <!--[if !IE]> -->
     <script type="text/javascript">
-        window.jQuery || document.write("<script src='/dist/js/jquery-2.0.3.min.js'>"+"<"+"script>");
+        window.jQuery || document.write("<script src='<?= Url::to('@web/dist/js/jquery-2.0.3.min.js') ?>'>"+"<"+"/script>");
     </script>
     <!-- <![endif]-->
 
     <!--[if IE]>
-    <script src='/dist/js/jquery-1.10.2.min.js'> <script>;
+    <script src='<?= Url::to('@web/dist/js/jquery-1.10.2.min.js') ?>'> <script>;
     <![endif]-->
 
 
     <!-- ace settings handler -->
-    <script src="/dist/js/ace-extra.min.js"></script>
-    <script src="/dist/js/bootstrap.min.js"></script>
+    <script src="<?= Url::to('@web/dist/js/ace-extra.min.js') ?>"></script>
+    <script src="<?= Url::to('@web/dist/js/bootstrap.min.js') ?>"></script>
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
 
     <!--[if lt IE 9]>
-    <script src="/dist/js/html5shiv.js"></script>
-    <script src="/dist/js/respond.min.js"></script>
+    <script src="<?= Url::to('@web/dist/js/html5shiv.js') ?>"></script>
+    <script src="<?= Url::to('@web/dist/js/respond.min.js') ?>"></script>
     <![endif]-->
 </head>
 
@@ -85,14 +86,14 @@ $userName =  \Yii::$app->user->id ? $user->getName() : '';
 
                         <li class="dropdown-header">
                             <i class="icon-envelope"></i>
-                            消息通知
+                            <?= yii::t('w', 'dropdown message') ?>
                         </li>
                         <li>
-                            <a href="/user/audit/">
+                            <a href="<?= Url::to('@web/user/audit/') ?>">
                                 <div class="clearfix">
                                     <span class="pull-left">
                                         <i class="btn btn-xs btn-primary icon-user"></i>
-                                        项目管理员申请
+                                        <?= yii::t('w', 'dropdown project apply') ?>
                                     </span>
                                     <span class="pull-right badge badge-info"><?= $count ?></span>
                                 </div>
@@ -164,18 +165,24 @@ $userName =  \Yii::$app->user->id ? $user->getName() : '';
                         -->
 
                         <li>
-                            <a href="/user/">
+                            <a href="<?= Url::to('@web/user/') ?>">
                                 <i class="icon-user"></i>
-                                个人资料
+                                <?= yii::t('w', 'dropdown profile') ?>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<?= Url::to('@web/user/reset-password') ?>">
+                                <i class="icon-key"></i>
+                                <?= yii::t('w', 'dropdown reset password') ?>
                             </a>
                         </li>
 
                         <li class="divider"></li>
 
                         <li>
-                            <a href="/site/logout">
+                            <a href="<?= Url::to('@web/site/logout') ?>">
                                 <i class="icon-off"></i>
-                                退出
+                                <?= yii::t('w', 'dropdown logout') ?>
                             </a>
                         </li>
                     </ul>
@@ -203,31 +210,39 @@ $userName =  \Yii::$app->user->id ? $user->getName() : '';
             <ul class="nav nav-list">
                 <?php if (\Yii::$app->user->identity->role == app\models\User::ROLE_ADMIN) { ?>
                 <li class="<?= \Yii::$app->controller->id == 'conf' ? 'active' : '' ?>">
-                    <a href="/conf/">
+                    <a href="<?= Url::to('@web/conf/') ?>">
                         <i class="icon-cogs"></i>
-                        <span class="menu-text"> 项目配置 </span>
+                        <span class="menu-text">
+                            <?= yii::t('w', 'menu config project') ?>
+                        </span>
                     </a>
                 </li>
                 <?php } ?>
                 <li class="<?= \Yii::$app->controller->id == 'task' && \Yii::$app->controller->action->id == 'index'
                     ? 'active' : '' ?>">
-                    <a href="/task/">
+                    <a href="<?= Url::to('@web/task/') ?>">
                         <i class="icon-list-alt"></i>
-                        <span class="menu-text"> 我的上线任务 </span>
+                        <span class="menu-text">
+                            <?= yii::t('w', 'menu task list') ?>
+                        </span>
                     </a>
                 </li>
                 <li class="<?= \Yii::$app->controller->id == 'task' && \Yii::$app->controller->action->id == 'submit'
                     ? 'active' : '' ?>">
-                    <a href="/task/submit/">
+                    <a href="<?= Url::to('@web/task/submit/') ?>">
                         <i class="icon-cloud-upload"></i>
-                        <span class="menu-text"> 提交上线任务 </span>
+                        <span class="menu-text">
+                            <?= yii::t('w', 'menu submit task') ?>
+                        </span>
                     </a>
                 </li>
 
                 <li class="<?= \Yii::$app->controller->action->id == 'check' ? 'active' : '' ?>">
-                    <a href="/walle/check/">
+                    <a href="<?= Url::to('@web/walle/check/') ?>">
                         <i class=" icon-eye-open"></i>
-                        <span class="menu-text"> 线上检查 </span>
+                        <span class="menu-text">
+                            <?= yii::t('w', 'menu file md5') ?>
+</span>
                     </a>
                 </li>
             </ul><!-- /.nav-list -->
@@ -238,7 +253,9 @@ $userName =  \Yii::$app->user->id ? $user->getName() : '';
                 <ul class="breadcrumb">
                     <li>
                         <i class="icon-home home-icon"></i>
-                        <a href="/">首页</a>
+                        <a href="<?= Url::to('@web') ?>">
+                            <?= yii::t('w', 'breadcrumb index') ?>
+                        </a>
                     </li>
                     <li class="active"><?= $this->title ?></li>
                 </ul><!-- .breadcrumb -->
@@ -263,30 +280,30 @@ $userName =  \Yii::$app->user->id ? $user->getName() : '';
 <!-- basic scripts -->
 
 <script type="text/javascript">
-    if("ontouchend" in document) document.write("<script src='/dist/js/jquery.mobile.custom.min.js'>"+"<"+"script>");
+    if("ontouchend" in document) document.write("<script src='<?= Url::to('@web/dist/js/jquery.mobile.custom.min.js') ?>'>"+"<"+"/script>");
 </script>
-<script src="/dist/js/typeahead-bs2.min.js"></script>
+<script src="<?= Url::to('@web/dist/js/typeahead-bs2.min.js') ?>"></script>
 
 <!-- page specific plugin scripts -->
 
 <!--[if lte IE 8]>
-<script src="/dist/js/excanvas.min.js"></script>
+<script src="<?= Url::to('@web/dist/js/excanvas.min.js') ?>"></script>
 <![endif]-->
 
-<script src="/dist/js/jquery-ui-1.10.3.custom.min.js"></script>
-<script src="/dist/js/jquery.ui.touch-punch.min.js"></script>
-<script src="/dist/js/jquery.slimscroll.min.js"></script>
-<script src="/dist/js/jquery.easy-pie-chart.min.js"></script>
-<script src="/dist/js/jquery.sparkline.min.js"></script>
-<script src="/dist/js/flot/jquery.flot.min.js"></script>
-<script src="/dist/js/chosen.jquery.min.js"></script>
-<script src="/dist/js/flot/jquery.flot.pie.min.js"></script>
-<script src="/dist/js/flot/jquery.flot.resize.min.js"></script>
+<script src="<?= Url::to('@web/dist/js/jquery-ui-1.10.3.custom.min.js') ?>"></script>
+<script src="<?= Url::to('@web/dist/js/jquery.ui.touch-punch.min.js') ?>"></script>
+<script src="<?= Url::to('@web/dist/js/jquery.slimscroll.min.js') ?>"></script>
+<script src="<?= Url::to('@web/dist/js/jquery.easy-pie-chart.min.js') ?>"></script>
+<script src="<?= Url::to('@web/dist/js/jquery.sparkline.min.js') ?>"></script>
+<script src="<?= Url::to('@web/dist/js/flot/jquery.flot.min.js') ?>"></script>
+<script src="<?= Url::to('@web/dist/js/chosen.jquery.min.js') ?>"></script>
+<script src="<?= Url::to('@web/dist/js/flot/jquery.flot.pie.min.js') ?>"></script>
+<script src="<?= Url::to('@web/dist/js/flot/jquery.flot.resize.min.js') ?>"></script>
 
 <!-- ace scripts -->
 
-<script src="/dist/js/ace-elements.min.js"></script>
-<script src="/dist/js/ace.min.js"></script>
+<script src="<?= Url::to('@web/dist/js/ace-elements.min.js') ?>"></script>
+<script src="<?= Url::to('@web/dist/js/ace.min.js') ?>"></script>
 
 <!-- inline scripts related to this page -->
 <script>

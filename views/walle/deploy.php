@@ -2,8 +2,9 @@
 /**
  * @var yii\web\View $this
  */
-$this->title = '部署上线';
+$this->title = yii::t('walle', 'deploying');
 use \app\models\Task;
+use yii\helpers\Url;
 ?>
 <style>
     .status > span {
@@ -21,19 +22,25 @@ use \app\models\Task;
     }
 </style>
 <div class="box" style="height: 100%">
-    <h4 class="box-title"><?= $task->title ?> - <?= $task->commit_id ?>
-        <?php if (in_array($task->status, [Task::STATUS_PASS, Task::STATUS_FAILED])) { ?>
-            <button type="submit" class="btn btn-primary btn-deploy" data-id="<?= $task->id ?>">部署</button>
-        <?php } ?>
-        <a class="btn btn-success btn-return" href="/task/index">返回</a></h4>
-
+    <h4 class="box-title header smaller red">
+            <i class="icon-map-marker"></i><?= \Yii::t('w', 'conf_level_' . $task->project['level']) ?>
+            -
+            <?= $task->project->name ?>
+            ：
+            <?= $task->title ?>
+            （<?= $task->project->repo_mode . ':' . $task->branch ?> <?= yii::t('walle', 'version') ?><?= $task->commit_id ?>）
+            <?php if (in_array($task->status, [Task::STATUS_PASS, Task::STATUS_FAILED])) { ?>
+                <button type="submit" class="btn btn-primary btn-deploy" data-id="<?= $task->id ?>"><?= yii::t('walle', 'deploy') ?></button>
+            <?php } ?>
+            <a class="btn btn-success btn-return" href="<?= Url::to('@web/task/index') ?>"><?= yii::t('walle', 'return') ?></a>
+    </h4>
     <div class="status">
-        <span><i class="fa fa-circle-o text-yellow step-1"></i>权限、目录检查</span>
-        <span><i class="fa fa-circle-o text-yellow step-2"></i>pre-deploy任务</span>
-        <span><i class="fa fa-circle-o text-yellow step-3"></i>代码检出</span>
-        <span><i class="fa fa-circle-o text-yellow step-4"></i>post-deploy任务</span>
-        <span><i class="fa fa-circle-o text-yellow step-5"></i>同步至服务器</span>
-        <span style="width: 28%"><i class="fa fa-circle-o text-yellow step-6"></i>全量更新(pre-release、更新版本、post-release)</span>
+        <span><i class="fa fa-circle-o text-yellow step-1"></i><?= yii::t('walle', 'process_detect') ?></span>
+        <span><i class="fa fa-circle-o text-yellow step-2"></i><?= yii::t('walle', 'process_pre-deploy') ?></span>
+        <span><i class="fa fa-circle-o text-yellow step-3"></i><?= yii::t('walle', 'process_checkout') ?></span>
+        <span><i class="fa fa-circle-o text-yellow step-4"></i><?= yii::t('walle', 'process_post-deploy') ?></span>
+        <span><i class="fa fa-circle-o text-yellow step-5"></i><?= yii::t('walle', 'process_rsync') ?></span>
+        <span style="width: 28%"><i class="fa fa-circle-o text-yellow step-6"></i><?= yii::t('walle', 'process_update') ?></span>
     </div>
     <div style="clear:both"></div>
     <div class="progress progress-small progress-striped active">
@@ -41,17 +48,17 @@ use \app\models\Task;
     </div>
 
     <div class="alert alert-block alert-success result-success" style="<?= $task->status != Task::STATUS_DONE ? 'display: none' : '' ?>">
-        <h4><i class="icon-thumbs-up"></i>上线成功!</h4>
-        <p>辛苦了，小主：）</p>
+        <h4><i class="icon-thumbs-up"></i><?= yii::t('walle', 'done') ?></h4>
+        <p><?= yii::t('walle', 'done praise') ?></p>
 
     </div>
 
     <div class="alert alert-block alert-danger result-failed" style="display: none">
-        <h4><i class="icon-bell-alt"></i>上线出错:（</h4>
+        <h4><i class="icon-bell-alt"></i><?= yii::t('walle', 'error title') ?></h4>
         <span class="error-msg">
         </span>
         <br><br>
-        <i class="icon-bullhorn"></i><span>请联系SA或者重新部署</span>
+        <i class="icon-bullhorn"></i><span><?= yii::t('walle', 'error todo') ?></span>
     </div>
 
 </div>
@@ -64,22 +71,28 @@ use \app\models\Task;
             var task_id = $(this).data('id');
             var action = '';
             var detail = '';
-            $.post("/walle/start-deploy", {taskId: task_id}, function(o) {
+            var timer;
+            $.post("<?= Url::to('@web/walle/start-deploy') ?>", {taskId: task_id}, function(o) {
                 action = o.code ? o.msg + ':' : '';
-                $('.error-msg').text(action + detail);
+                if (o.code != 0) {
+                    clearInterval(timer);
+                    $('.progress-status').removeClass('progress-bar-success').addClass('progress-bar-danger');
+                    $('.error-msg').text(action + detail);
+                    $('.result-failed').show();
+                    $this.removeClass('disabled');
+                }
             });
-            $('.progress-status').attr('aria-valuenow', 10).width('5%');
+            $('.progress-status').attr('aria-valuenow', 10).width('10%');
             $('.result-failed').hide();
             function getProcess() {
-                $.get("/walle/get-process?taskId=" + task_id, function (o) {
+                $.get("<?= Url::to('@web/walle/get-process?taskId=') ?>" + task_id, function (o) {
                     data = o.data;
                     // 执行失败
                     if (0 == data.status) {
                         clearInterval(timer);
                         $('.step-' + data.step).removeClass('text-yellow').addClass('text-red');
                         $('.progress-status').removeClass('progress-bar-success').addClass('progress-bar-danger');
-                        $('.error-msg').text(o.msg + ':' + data.memo);
-                        detail = data.memo + '<br>' + data.command;
+                        detail = o.msg + ':' + data.memo + '<br>' + data.command;
                         $('.error-msg').html(action + detail);
                         $('.result-failed').show();
                         $this.removeClass('disabled');
@@ -106,6 +119,14 @@ use \app\models\Task;
             }
             timer = setInterval(getProcess, 600);
         })
+
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            hm.src = "//hm.baidu.com/hm.js?5fc7354aff3dd67a6435818b8ef02b52";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();
     })
 
 </script>

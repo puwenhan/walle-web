@@ -29,11 +29,11 @@ class EventBootstrap implements BootstrapInterface
                 return true;
             }
             if (!Yii::$app->request->getIsAjax()) {
-                Yii::$app->response->redirect('/site/login');
+                Yii::$app->response->redirect('site/login');
                 Yii::$app->end();
             }
             $event->isValid = false;
-            throw new \Exception('请先登录，再操作：）');
+            throw new \Exception(yii::t('w', 'need login'));
         });
     }
 

@@ -2,18 +2,21 @@
 /**
  * @var yii\web\View $this
  */
-$this->title = $project->name . '项目配置检测';
+use yii\helpers\Url;
+
+$this->title = $project->name . yii::t('conf', 'detection');
 
 ?>
 <div class="alert">
     <i class="icon-spinner icon-spin orange bigger-300"></i>
 
-    正在检测...
+    <?= yii::t('conf', 'detecting') ?>
+
 </div>
 
 <script>
     jQuery(function($) {
-        $.get('/walle/detection?projectId=<?= $project->id ?>', function(o) {
+        $.get('<?= Url::to("@web/walle/detection?projectId={$project->id}") ?>', function(o) {
             // 检测失败
             if (o.code) {
                 $('.alert').addClass('alert-danger').html(o.data)
