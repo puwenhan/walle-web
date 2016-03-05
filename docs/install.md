@@ -59,7 +59,7 @@ composer install --prefer-dist --no-dev --optimize-autoloader -vvvv
 ----------
 ```
 cd walle-web
-./yii run/setup # 需要你的yes
+./yii walle/setup # 需要你的yes
 ```
 
 
@@ -77,7 +77,7 @@ server {
     root /the/dir/of/walle-web/web; # 根目录为web
     index index.php;
 
-    # 建议放内网
+    # 注意！！测试通过之后一定取消下面注释，设置访问内网
     # allow 192.168.0.0/24;
     # deny all;
 
