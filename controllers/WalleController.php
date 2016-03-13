@@ -9,18 +9,17 @@
 
 namespace app\controllers;
 
+use app\components\Ansible;
+use app\components\Command;
+use app\components\Controller;
+use app\components\Folder;
 use app\components\Repo;
+use app\components\Task as WalleTask;
+use app\models\Project;
+use app\models\Record;
+use app\models\Task;
 use yii;
 use yii\data\Pagination;
-use app\components\Command;
-use app\components\Folder;
-use app\components\Git;
-use app\components\Task as WalleTask;
-use app\components\Controller;
-use app\models\Task;
-use app\models\Record;
-use app\models\Project;
-use app\models\User;
 
 class WalleController extends Controller {
 
@@ -38,6 +37,11 @@ class WalleController extends Controller {
      * Walle的高级任务
      */
     protected $walleTask;
+
+    /**
+     * Ansible 任务
+     */
+    protected $ansible;
 
     /**
      * Walle的文件目录操作
@@ -82,7 +86,13 @@ class WalleController extends Controller {
                 $this->_preDeploy();
                 $this->_gitUpdate();
                 $this->_postDeploy();
-                $this->_rsync();
+                if (Project::getAnsibleStatus()) {
+                    // ansible copy
+                    $this->_copy('*');
+                } else {
+                    // 循环 rsync
+                    $this->_rsync();
+                }
                 $this->_updateRemoteServers($this->task->link_id);
                 $this->_cleanRemoteReleaseVersion();
                 $this->_cleanUpLocal($this->task->link_id);
@@ -106,7 +116,7 @@ class WalleController extends Controller {
 
             // 可回滚的版本设置
             $this->_enableRollBack();
-            
+
             // 记录当前线上版本（软链）回滚则是回滚的版本，上线为新版本
             $this->conf->version = $this->task->link_id;
             $this->conf->save();
@@ -147,19 +157,42 @@ class WalleController extends Controller {
         // 本地git ssh-key是否加入deploy-keys列表
         $revision = Repo::getRevision($project);
         try {
+
+            // 1.检测宿主机检出目录是否可读写
+            $codeBaseDir = Project::getDeployFromDir();
+            $isWritable  = is_dir($codeBaseDir) ? is_writable($codeBaseDir) : @mkdir($codeBaseDir, 0755, true);
+            if (!$isWritable) {
+                $code  = -1;
+                $log[] = yii::t('walle', 'hosted server is not writable error', [
+                    'user' => getenv("USER"),
+                    'path' => $project->deploy_from,
+                ]);
+            }
+
+            // 2.检测宿主机ssh是否加入git信任
             $ret = $revision->updateRepo();
             if (!$ret) {
                 $code  = -1;
                 $error = $project->repo_type == Project::REPO_GIT
-                    ? yii::t('walle', 'ssh-key to git')
+                    ? yii::t('walle', 'ssh-key to git', ['user' => getenv("USER")])
                     : yii::t('walle', 'correct username passwd');
-                $log[] = yii::t('walle', 'hosted server error', [
-                    'user'       => getenv("USER"),
-                    'path'       => $project->deploy_from,
-                    'ssh_passwd' => $error,
-                    'error'      => $revision->getExeLog(),
+                $log[] = yii::t('walle', 'hosted server ssh error', [
+                    'error' => $error,
                 ]);
             }
+
+            if ($project->ansible) {
+                $this->ansible = new Ansible($project);
+
+                // 3.检测 ansible 是否安装
+                $ret = $this->ansible->test();
+                if (!$ret) {
+                    $code = -1;
+                    $log[] = yii::t('walle', 'hosted server ansible error');
+                }
+
+            }
+
         } catch (\Exception $e) {
             $code = -1;
             $log[] = yii::t('walle', 'hosted server sys error', [
@@ -170,25 +203,62 @@ class WalleController extends Controller {
         // 权限与免密码登录检测
         $this->walleTask = new WalleTask($project);
         try {
-            $command = sprintf('mkdir -p %s', Project::getReleaseVersionDir('detection'));
+            // 4.检测php用户是否加入目标机ssh信任
+            $command = 'id';
             $ret = $this->walleTask->runRemoteTaskCommandPackage([$command]);
             if (!$ret) {
                 $code = -1;
-                $log[] = yii::t('walle', 'target server error', [
+                $log[] = yii::t('walle', 'target server ssh error', [
                     'local_user'  => getenv("USER"),
                     'remote_user' => $project->release_user,
                     'path'        => $project->release_to,
-                    'error'       => $this->walleTask->getExeLog(),
                 ]);
             }
+
+            if ($project->ansible) {
+                // 5.检测 ansible 连接目标机是否正常
+                $ret = $this->ansible->ping();
+                if (!$ret) {
+                    $code = -1;
+                    $log[] = yii::t('walle', 'target server ansible ping error');
+                }
+            }
+
+            // 6.检测php用户是否具有目标机release目录读写权限
+            $tmpDir = 'detection' . time();
+            $command = sprintf('mkdir -p %s', Project::getReleaseVersionDir($tmpDir));
+            $ret = $this->walleTask->runRemoteTaskCommandPackage([$command]);
+            if (!$ret) {
+                $code = -1;
+                $log[] = yii::t('walle', 'target server is not writable error', [
+                    'remote_user' => $project->release_user,
+                    'path'        => $project->release_to,
+                ]);
+            }
+
             // 清除
-            $command = sprintf('rm -rf %s', Project::getReleaseVersionDir('detection'));
+            $command = sprintf('rm -rf %s', Project::getReleaseVersionDir($tmpDir));
             $this->walleTask->runRemoteTaskCommandPackage([$command]);
         } catch (\Exception $e) {
             $code = -1;
             $log[] = yii::t('walle', 'target server sys error', [
                 'error' => $e->getMessage()
             ]);
+        }
+
+        // 7.路径必须为绝对路径
+        $needAbsoluteDir = [
+            Yii::t('conf', 'deploy from') => Project::getConf()->deploy_from,
+            Yii::t('conf', 'webroot')     => Project::getConf()->release_to,
+            Yii::t('conf', 'releases')    => Project::getConf()->release_library,
+        ];
+        foreach ($needAbsoluteDir as $tips => $dir) {
+            if (0 !== strpos($dir, '/')) {
+                $code = -1;
+                $log[] = yii::t('walle', 'config dir must absolute', [
+                    'path' => sprintf('%s:%s', $tips, $dir),
+                ]);
+            }
         }
 
         // task 检测todo...
@@ -198,7 +268,6 @@ class WalleController extends Controller {
         }
         $this->renderJson(join("<br>", $log), $code);
     }
-
 
     /**
      * 获取线上文件md5
@@ -216,7 +285,7 @@ class WalleController extends Controller {
         $this->walleFolder->getFileMd5($file);
         $log = $this->walleFolder->getExeLog();
 
-        $this->renderJson(join("<br>", explode(PHP_EOL, $log)));
+        $this->renderJson(nl2br($log));
     }
 
     /**
@@ -391,21 +460,45 @@ class WalleController extends Controller {
     }
 
     /**
+     * ansible copy
+     *
+     * @param string $files
+     * @return bool
+     * @throws \Exception
+     */
+    private function _copy($files = '*') {
+
+        $sTime = Command::getMs();
+        $ret = $this->walleFolder->copyFiles($this->task->link_id, $files);
+        $duration = Command::getMs() - $sTime;
+        Record::saveRecord($this->walleFolder, $this->task->id, Record::ACTION_SYNC, $duration);
+        if (!$ret) {
+            throw new \Exception(yii::t('walle', 'rsync error'));
+        }
+
+        return true;
+    }
+
+    /**
      * 同步文件到服务器
      *
      * @return bool
      * @throws \Exception
      */
     private function _rsync() {
-        // 同步文件
+
+        // 循环rsync传输
         foreach (Project::getHosts() as $remoteHost) {
             $sTime = Command::getMs();
             $ret = $this->walleFolder->syncFiles($remoteHost, $this->task->link_id);
             // 记录执行时间
             $duration = Command::getMs() - $sTime;
             Record::saveRecord($this->walleFolder, $this->task->id, Record::ACTION_SYNC, $duration);
-            if (!$ret) throw new \Exception(yii::t('walle', 'rsync error'));
+            if (!$ret) {
+                throw new \Exception(yii::t('walle', 'rsync error'));
+            }
         }
+
         return true;
     }
 

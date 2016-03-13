@@ -9,7 +9,7 @@ Walle - A Deployment Tool
 A web deployment tool, Easy for configuration, Fully functional, Smooth interface, Out of the box.
 support git/svn Version control system, no matter what language you are, php/java/ruby/python, just as jenkins. you can deploy the code or output to multiple servers easily by walle.
 
-[Home Page](http://www.walle-web.io) | [官方主页](http://www.walle-web.io) | [中文说明](https://github.com/meolu/walle-web/blob/master/docs/README-zh.md) | [文档手册](http://doc.huamanshu.com/%E7%93%A6%E5%8A%9B).
+[Home Page](https://www.walle-web.io) | [官方主页](https://www.walle-web.io) | [中文说明](https://github.com/meolu/walle-web/blob/master/docs/README-zh.md) | [文档手册](https://www.walle-web.io/docs/).
 
 Now, there are more than ten companies hosted walle for deployment, star walle if you like : )
 
@@ -129,28 +129,28 @@ git pull
 Architecture
 ------------
 #### git/svn, user, host, servers
-![](https://raw.github.com/meolu/doc/master/upload/walle-flow-relation-en.png)
+![](https://raw.github.com/meolu/docs/master/walle-web.io/docs/en/static/walle-flow-relation-en.png)
 
 #### deployment flow
-![](https://raw.github.com/meolu/doc/master/upload/walle-flow-en.png)
+![](https://raw.github.com/meolu/docs/master/walle-web.io/docs/en/static/walle-flow-en.png)
 
 Screenshots
 -----------
 
 #### project config
-![](https://raw.github.com/meolu/doc/master/upload/walle-config-edit-en.jpg)
+![](https://raw.github.com/meolu/docs/master/walle-web.io/docs/en/static/walle-config-edit-en.jpg)
 
 #### sumbit a task
-![](https://raw.github.com/meolu/doc/master/upload/walle-submit-en.jpg)
+![](https://raw.github.com/meolu/docs/master/walle-web.io/docs/en/static/walle-submit-en.jpg)
 
 #### list of task
-![](https://raw.github.com/meolu/doc/master/upload/walle-dev-list-en.jpg)
+![](https://raw.github.com/meolu/docs/master/walle-web.io/docs/en/static/walle-dev-list-en.jpg)
 
 #### demo show
-![](https://raw.github.com/meolu/doc/master/upload/walle-en.gif)
+![](https://raw.github.com/meolu/docs/master/walle-web.io/docs/en/static/walle-en.gif)
 
 ## CHANGELOG
-[CHANGELOG](https://github.com/meolu/walle-web/blob/master/docs/CHANGELOG.md)
+[CHANGELOG](https://github.com/meolu/walle-web/releases)
 
 
 Discussing
